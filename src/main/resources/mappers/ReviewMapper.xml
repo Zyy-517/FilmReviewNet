@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.frn.dao.ReviewMapper">
+    <resultMap id="ReviewRM" type="com.example.frn.entity.Review">
+        <id property="id" column="id"></id>
+        <result property="filmId" column="film_id"></result>
+        <result property="userId" column="user_id"></result>
+        <!--关联查询评论人信息-->
+        <association property="user" column="user_id" javaType="com.example.frn.entity.User"
+                     select="com.example.frn.dao.UserMapper.selectById"></association>
+        <!--关联查询电影信息-->
+        <association property="film" column="film_id" javaType="com.example.frn.entity.Film"
+                     select="com.example.frn.dao.FilmMapper.selectById"></association>
+        <!--关联查询回复列表-->
+        <collection property="replyList" ofType="com.example.frn.entity.Review"
+                    column="id" select="selectListByReviewId"></collection>
+    </resultMap>
+
+    <resultMap id="ReviewRM2" type="com.example.frn.entity.Review">
+        <id property="id" column="id"></id>
+        <!--关联查询评论人信息-->
+        <association property="user" column="user_id" javaType="com.example.frn.entity.User"
+                     select="com.example.frn.dao.UserMapper.selectById"></association>
+        <!--关联查询电影信息-->
+        <association property="film" column="film_id" javaType="com.example.frn.entity.Film"
+                     select="com.example.frn.dao.FilmMapper.selectById"></association>
+    </resultMap>
+
+    <select id="selectList" resultMap="ReviewRM2">
+        select * from review where is_delete=0
+        <if test="filmId!=null">
+            and film_id=#{filmId}
+        </if>
+        <if test="userId!=null">
+            and user_id=#{userId}
+        </if>
+        <if test="status!=null">
+            and status=#{status}
+        </if>
+        order by like_num desc
+    </select>
+</mapper>

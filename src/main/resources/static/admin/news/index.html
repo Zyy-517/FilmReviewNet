@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>后台管理中心</title>
+    <link rel="stylesheet" href="/admin/css/pintuer.css"/>
+    <link rel="stylesheet" href="/admin/css/admin.css"/>
+    <link href="/admin/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all"/>
+    <script src="/admin/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/pintuer.js"></script>
+    <script src="/public/js/vue.js"></script>
+    <script src="/public/js/axios.js"></script>
+    <script src="/public/js/axios-config.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 显示影人详情的模态框 Modal -->
+    <div class="modal modal-lg fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">{{curItem.name}}</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div v-show="type==0">{{ curItem.content}}</div>
+                    <div v-show="type==1">
+                        <img v-bind:src="curItem.post">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--// Modal-->
+    <div class="panel admin-panel">
+        <div class="panel-head"><strong class="icon-reorder"> 资讯管理</strong></div>
+        <div class="padding border-bottom">
+            <ul class="search">
+                <li>
+                    <input @keyup.enter="loadData()" v-model="params.title" class="input"
+                           type="text" placeholder="输入标题快速查找">
+                </li>
+                <li>
+                    <button @click="loadData()" class="button border-blue">
+                        <span class="icon-search"></span> 查询
+                    </button>
+                </li>
+                <li>
+                    <a class="button border-green" href="/admin/news/updateoradd.html">
+                        <span class="icon-edit"></span> 添加</a>
+                </li>
+            </ul>
+        </div>
+        <table class="table table-hover text-center">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>标题</th>
+                <th>内容</th>
+                <th>来源</th>
+                <th>咨询封面</th>
+                <th>发布日期</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+                <!--在这里遍历列表显示记录-->
+                <tr v-for="(item,i) in list">
+                    <td>{{ item.id }}</td>
+                    <td>{{item.title}}</td>
+                    <td>
+                        <img v-bind:src="item.post" alt="图片加载失败" @click="show(item,1)" title="点击查看大图" data-bs-toggle="modal" data-bs-target="#exampleModal" width="200" />
+                    </td>
+                    <td>
+                        <div class="text-container">
+                            {{item.content}}
+                        </div>
+                        <button @click="show(item,0)" class="btn btn-link btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal">显示全部</button>
+                    </td>
+                    <td>{{item.source}}</td>
+                    <td>{{item.releaseDate}}</td>
+                    <td>
+                        <a class="btn btn-sm btn-warning" :href="'updateoradd.html?id=' + item.id">修改</a>
+                        <button class="btn btn-sm btn-danger" @click="del(item.id)">删除</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="7" align="center">
+                        <nav aria-label="Page navigation ">
+                            <ul class="pagination">
+                                <li class="page-item" v-if="page.hasPreviousPage">
+                                    <a class="page-link" href="#" @click="goto(page.prePage)">上一页</a>
+                                </li>
+                                <li :class="'page-item ' + (page.pageNum===item?'active':'')"
+                                    v-for="item in page.navigatepageNums">
+                                    <a class="page-link"  href="#" @click="goto(item)">{{ item }}</a>
+                                </li>
+                                <li class="page-item" v-if="page.hasNextPage">
+                                    <a class="page-link" href="#" @click="goto(page.nextPage)">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+    new Vue({
+        'el': '#app',
+        'data': {
+            curItem:{},
+            type:null,
+            list: [],
+            page: {},
+            params: {
+                pageNum: 1,
+                pageSize: 5,
+                title:null
+            }
+
+        },
+        'methods': {
+            del(id) {
+              if (confirm("确定要删除吗？")){
+                  let url = '/api/v1/news/remove/' + id
+                  axios.post(url)
+                      .then(res =>{
+                          alert(res.message)
+                          this.loadData()
+                      })
+              }
+            },
+            show(item,type){
+                this.curItem = item
+                this.type = type
+            },
+            goto(pn) {
+                this.params.pageNum = pn
+                this.loadData()
+            },
+            loadData() {//分页查询数据
+                let url = '/api/v1/news/page'
+                axios.post(url, this.params)
+                    .then(res =>{
+                        this.page = res.data
+                        this.list = res.data.list
+                    })
+            }
+        },
+        mounted() {
+            // 手动调用分页查询的函数
+            this.loadData()
+        }
+    })
+
+
+</script>
+</body>
+</html>

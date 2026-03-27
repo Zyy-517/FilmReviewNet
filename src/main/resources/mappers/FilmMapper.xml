@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.frn.dao.FilmMapper">
+    <!--批量插入影片-类别-->
+    <insert id="insertBatchFilmCategory">
+        insert into film_category(film_id, category_id) VALUES
+            <foreach collection="list" separator="," item="item">
+                (#{item.filmId},#{item.categoryId})
+            </foreach>
+    </insert>
+    <!--批量插入影片-影人-->
+    <insert id="insertBatchFilmMaker">
+        insert into film_maker(film_id, maker_id, role ,sort) values
+            <foreach collection="list" separator="," item="item" index="i">
+                (#{item.filmId},#{item.makerId},#{item.role},#{i}+1)
+            </foreach>
+    </insert>
+    <select id="list" resultMap="RMFilm1">
+        select * from film where is_delete=0
+        <if test="name!=null and name!=''">
+            and name like '%${name}%'
+        </if>
+        <if test="cid!=null">
+            and id in (select film_id from film_category where category_id=#{cid})
+        </if>
+    </select>
+
+    <resultMap id="RMFilm1" type="com.example.frn.entity.Film">
+        <id column="id" property="id"/>
+        <!-- 电影评分-->
+        <association property="score" column="id" javaType="float" select="selectAvgScore"></association>
+        <!--类别列表-->
+        <collection property="categoryList" column="id"
+                    ofType="com.example.frn.entity.Category" select="selectCategoryList"></collection>
+    </resultMap>
+    <resultMap id="RMFilm2" type="com.example.frn.entity.Film" extends="RMFilm1">
+        <collection property="makerList" column="id"
+                    ofType="com.example.frn.entity.FilmMaker" select="selectMakerList">
+        </collection>
+    </resultMap>
+    <select id="selectMakerList" resultType="com.example.frn.entity.FilmMaker">
+        select film_id, maker_id, name, role, sort from film_maker fm
+            join maker m on m.id = fm.maker_id and fm.film_id=#{param}
+        order by fm.sort asc
+    </select>
+
+    <select id="selectAvgScore" resultType="_float">
+        select avg(score) from score where film_id=#{param}
+    </select>
+
+    <select id="selectCategoryList" resultType="com.example.frn.entity.Category">
+        select id, name from category
+        where id in(select category_id from film_category where film_id=#{param})
+    </select>
+</mapper>

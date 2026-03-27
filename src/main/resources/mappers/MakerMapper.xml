@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.frn.dao.MakerMapper">
+    <select id="selectListByName" resultType="com.example.frn.entity.Maker">
+        select *from maker where is_delete=0
+        <if test="name!=null and name!=''">
+            and name like '%${name}%'
+        </if>
+    </select>
+    <select id="selectListInIds" resultType="com.example.frn.entity.Maker">
+        select *from maker where is_delete=0 and id IN
+        <foreach collection="list" item="id" open="(" separator="," close= ")">
+            #{id}
+        </foreach>
+    </select>
+</mapper>

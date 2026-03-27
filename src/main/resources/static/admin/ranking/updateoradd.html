@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>后台管理中心</title>
+    <link rel="stylesheet" href="/admin/css/pintuer.css"/>
+    <link rel="stylesheet" href="/admin/css/admin.css"/>
+    <link href="/admin/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all"/>
+    <script src="/admin/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/pintuer.js"></script>
+    <title>榜单设置</title>
+    <style type="text/css">
+        .occupation-box {
+            border: 1px solid #ddd;
+            width: 300px !important;
+            height: 100px;
+            padding: 20px;
+        }
+
+        .occupation-box > label {
+            margin-right: 22px;
+        }
+        .body-content label {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="panel admin-panel">
+    <div class="panel-head"><strong><span class="icon-pencil-square-o"></span> 榜单信息</strong></div>
+    <div id="app" class="body-content">
+        <!-- 查询并选中影片的模态框 Modal -->
+        <div class="modal modal-lg fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">选择影片</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="search">
+                            <li>
+                                <input class="input" type="text" placeholder="输入影片名称" v-model="keyword" @keyup.enter="searchFilm">
+                            </li>
+                            <li>
+                                <button class="button border-blue" @click="searchFilm">搜索</button>
+                            </li>
+                        </ul>
+                        <table class="table table-hover">
+                            <thead>
+                            <th>电影名称</th>
+                            <th>电影封面</th>
+                            <th>操作</th>
+                            </thead>
+                            <tbody>
+                            <tr v-for="film in filmList">
+                                <td>{{film.name}}</td>
+                                <td>
+                                    <img v-bind:src="film.cover" height="100" alt="">
+                                </td>
+                                <td>
+                                    <button class="btn btn-success btn-sm" @click="selectFilm(film)">选中</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- // Modal-->
+        <form method="post" class="form-x" id="form" @submit.prevent="submit">
+            <div class="form-group">
+                <div class="label">
+                    <label>名称：</label>
+                </div>
+                <div class="field">
+                    <input type="hidden" name="id" v-model="ranking.id" />
+                    <h4>{{ranking.year}} 年度最佳 {{ranking.categoryName}} 片</h4>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>年份：</label>
+                </div>
+                <div class="field">
+                    <input type="text" class="input" name="name" v-model="ranking.year" size="100" />
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>类别：</label>
+                </div>
+                <div class="field">
+                    <select class="input" name="categoryName" v-model="ranking.categoryName">
+                        <option v-for="category in categoryList" v-bind:value="category.name">
+                            {{category.name}}
+                        </option>
+                    </select>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>选择影片：</label>
+                </div>
+                <div class="field">
+                    <h5>
+                        <span v-for="(film,i) in selectedFilmList" class="badge bg-blue" title="双击移除该电影"
+                        style="margin: 2px 2px; cursor: pointer" @dblclick="removeFilm(i)">{{film.name}}</span>
+                    </h5>
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal">添加</button>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button class="button border-main icon-check-square-o" type="submit"> 提交</button>
+                    <button class="button border-red icon-tags" type="button" onclick="window.history.go(-1);"> 返回
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="/public/js/vue.js"></script>
+    <script type="text/javascript" src="/public/js/axios.js"></script>
+    <script type="text/javascript" src="/public/js/axios-config.js"></script>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                ranking: {},
+                categoryList:[],
+                keyword:null,//搜索关键词
+                filmList:[],//保存查询到的影片
+                selectedFilmList:[],//保存被选中的影片
+                submitUrl: "/api/v1/ranking/save"
+            },
+            methods: {
+                removeFilm(index){
+                    this.selectedFilmList.splice(index,1)
+                },
+                selectFilm(film){
+                    if (confirm("确定要选中("+film.name +")吗？")){
+                        //将选中的影片加入到 selectFilmList
+                        this.selectedFilmList.push(film)
+                    }
+                },
+                searchFilm(){
+                    let params = {pageNum:1,pageSize:10,name:this.keyword}
+                    let url = '/api/v1/film/page'
+                    axios.post(url,params)
+                        .then(res =>{
+                            this.filmList =res.data.list
+                        })
+                },
+                loadCategoryList(){
+                    let url = '/api/v1/category/list'
+                    axios.get(url)
+                        .then(res =>{
+                            this.categoryList = res.data
+                        })
+                },
+                submit() {
+                    if (this.selectedFilmList.length===0){
+                        alert("请先选择影片！")
+                    }else {
+                        let tempIds = []
+                        //遍历选中影片列表，然后取出电影ID，放入tempIds里
+                        this.selectedFilmList.forEach(film => {
+                            tempIds.push(film.id)
+                        })
+                        this.ranking.filmIdList = tempIds.join(",")
+                        //alert(this.ranking.filmIdList)
+                        axios.post(this.submitUrl,this.ranking)
+                            .then(res =>{
+                                alert(res.message)
+                            })
+                    }
+                }
+            },
+            mounted() {
+                this.loadCategoryList()
+                // 去url里取出cid
+                const urlObj = new URL(window.location.href)
+                const params = new URLSearchParams(urlObj.search)
+                const cid = params.get('id')
+                if (cid) {// 如果存在id参数就是修改，否则是添加
+                    let url = '/api/v1/ranking/detail/{id}'.replace('{id}',cid)
+                    axios.get(url)
+                        .then(res =>{
+                            this.ranking = res.data
+                            this.selectedFilmList = this.ranking.filmList
+                        })
+                    this.submitUrl = '/api/v1/ranking/update'
+                }
+
+            }
+
+        })
+    </script>
+</div>
+</body>
+</html>

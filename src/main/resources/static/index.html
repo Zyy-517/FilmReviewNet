@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影评网站入口页</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/public/images/bg.jpg'); /* 替换为你的图片文件名 */
+            background-size: cover; /* 使背景图片覆盖整个页面 */
+            background-position: center; /* 使背景图片居中 */
+            background-repeat: no-repeat; /* 防止背景图片重复 */
+            height: 100vh; /* 使背景图片的高度与视口高度一致 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white; /* 根据需要设置文本颜色 */
+            text-align: center;
+        }
+
+        .header {
+            position: absolute;
+            top: 50px;
+            width: 80%;
+            background-color: rgba(0, 0, 0, 0.1); /* 可选的，用于增加Logo区域的可读性 */
+            display: flex;
+            justify-content: flex-start; /* 使内容靠左对齐 */
+            align-items: center; /* 垂直居中 */
+            padding: 10px 50px; /* 增加内边距 */
+            border-radius: 10px;
+        }
+
+        .logo {
+            height: 50px; /* 根据Logo图片的大小调整 */
+            width: auto; /* 保持Logo图片的宽高比 */
+        }
+
+        .container {
+            width: 30%;
+            text-align: center;
+            background-color: rgba(255, 255, 255, .8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            color: #fff;
+            padding-left: 20px;
+            font-family: "Microsoft YaHei", "simsun", "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+
+        .button-group {
+            margin-top: 20px;
+        }
+
+        .large-button {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .large-button:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+</head>
+<body>
+<div class="header">
+    <img src="/public/images/logo.jpg" alt="网站Logo" class="logo"> <!-- 替换为你的Logo图片文件名 -->
+    <h1>欢迎来到莹莹影评网</h1>
+</div>
+<div class="container">
+    <div class="button-group">
+        <button class="large-button" onclick="window.location.href='/admin/index.html'">管理员入口</button>
+        <button class="large-button" onclick="window.location.href='/user/index.html'">用户页面</button>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+2024.10.13
+在config包下添加SpringDocConfig.配置api接口文档的相关信息
+开发实体类Category，添加响应的属性：在实体类前添加@Data注解
+开发CategoryMapper，在接口前添加@Mapper，声明增删改查影片分类的方法，并映射响应的SQL语句
+为了保证Mapper接口能够被spring容器加载，
+在项目启动类前添加注解@MapperScan（“com.example.frn.dao”）
+声明CategoryService，声明增删改查Category的相关方法
+定义CategoryServiceImpl实现类，实现CategoryService接口，在类之前加上@Service注解，
+使用@Autowired注解注入一个CategoryMapper接口的实力重写接口中的方法
+定义CategoryController，添加@RestController注解和@RequestMapping（“/api/v1/category”）
+在其中注入一个CategoryService实例（@Autowired）
+在这个Controller中添加增删改查级分页的方法，为了解决接收部分实体类参数的问题先后定义了CategoryInsertDTO,CategoryUpdateDTO,PageDTO
+
+2024.10.20
+开发了管理员模块的后端代码

@@ -1,0 +1,477 @@
+<!DOCTYPE html PUBLIC>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>后台管理中心</title>
+    <link rel="stylesheet" href="/admin/css/pintuer.css"/>
+    <link rel="stylesheet" href="/admin/css/admin.css"/>
+    <link href="/admin/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all"/>
+    <script src="/admin/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/pintuer.js"></script>
+    <title>编辑影片信息</title>
+    <style type="text/css">
+        .occupation-box {
+            border: 1px solid #ddd;
+            width: 300px !important;
+            height: 100px;
+            padding: 20px;
+        }
+
+        .occupation-box > label {
+            margin-right: 22px;
+        }
+        .body-content label {
+            font-size: 1.2rem;
+            vertical-align: middle;
+        }
+        .field .input {
+            width: 600px;
+        }
+        .field label {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="panel admin-panel">
+    <div class="panel-head"><strong><span class="icon-pencil-square-o"></span> 影片信息</strong></div>
+    <div id="app" class="body-content">
+        <!-- 测试影片播放链接的模态框 Modal -->
+        <div class="modal modal-lg fade" id="playModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="playModalLabel">视频播放测试</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <video id="player" v-bind:src="film.playLink" controls style="width: 100%; height: 100%;"></video>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- // 查询并选中影人的模态框 Modal-->
+        <!-- 查询并选中影人的模态框 Modal -->
+        <div class="modal modal-lg fade" id="selectMakerModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">选择影人</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="search">
+                            <li>
+                                <input class="input" type="text" placeholder="输入影人姓名快速检索" v-model="keyword" @keyup.enter="searchFilmMaker">
+                            </li>
+                            <li>
+                                <button class="button border-blue" @click="searchFilmMaker">搜索</button>
+                            </li>
+                        </ul>
+                        <table class="table table-hover">
+                            <thead>
+                            <th>姓名</th>
+                            <th>头像</th>
+                            <th>操作</th>
+                            </thead>
+                            <tbody>
+                                <tr style="text-align: center" v-for="item in makerList">
+                                    <td>{{item.name}}</td>
+                                    <td>
+                                        <img v-bind:src="item.avatar" height="80">
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-success btn-sm" @click="selectMaker(item)">选中</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- // 查询并选中影人的模态框 Modal-->
+        <form method="post" class="form-x" id="form" @submit.prevent="submit">
+            <div class="form-group">
+                <div class="label">
+                    <label>影片名称：</label>
+                </div>
+                <div class="field">
+                    <input type="hidden" name="id" v-model="film.id" />
+                    <input type="text" class="input" name="name" v-model="film.name"  />
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <!--封面-->
+            <div class="form-group">
+                <div class="label">
+                    <label>封面：</label>
+                </div>
+                <div class="field">
+                    <input v-model="film.cover" type="text" name="avatar" class="input" style="width: 600px;" readonly>
+                    <img class="img-upload" v-show="film.cover != null" v-bind:src="film.cover" height="80" alt="">
+                    <input type="file" id="cover" name="cover" accept="image/*" @change="uploadResource">
+                </div>
+            </div>
+            <!--封面-->
+            <div class="form-group">
+                <div class="label">
+                    <label>海报：</label>
+                </div>
+                <div class="field">
+                    <input v-model="film.post" type="text" name="avatar" class="input" style="width: 600px;" readonly>
+                    <img class="img-upload" v-show="film.post != null" v-bind:src="film.post" alt="">
+                    <input type="file" id="post" name="post" accept="image/*" @change="uploadResource">
+                </div>
+            </div>
+            <!--视频-->
+            <div class="form-group">
+                <div class="label">
+                    <label>视频：</label>
+                </div>
+                <div class="field">
+                    <input v-model="film.playLink" type="text" name="avatar" class="input" style="width: 600px;" readonly>
+                    <input type="file"  id="playLink" name="playLink" accept="video/MP4V-ES" @change="uploadResource">
+                    <a class="btn btn-link" data-bs-toggle="modal" data-bs-target="#playModal">测试视频</a>
+                </div>
+            </div>
+            <!--导演-->
+            <div class="form-group">
+                <div class="label">
+                    <label>选择导演：</label>
+                </div>
+                <div class="field">
+                    <h5>
+                        <span v-for="(item, i) in film.makerList" class="badge bg-red" title="双击移除该项" v-if="item.role=='导演'"
+                              style="margin: 2px 2px; cursor: pointer;" @dblclick="removeFilmMaker(i)">{{item.name}}</span>
+                    </h5>
+                    <button type="button" class="button border-red" data-bs-toggle="modal" data-bs-target="#selectMakerModal" data-bs-whatever="导演">添加</button>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <!--编剧-->
+            <div class="form-group">
+                <div class="label">
+                    <label>选择编剧：</label>
+                </div>
+                <div class="field">
+                    <h5>
+                        <span v-for="(item, i) in film.makerList" class="badge bg-blue" title="双击移除该项" v-if="item.role=='编剧'"
+                              style="margin: 2px 2px; cursor: pointer;" @dblclick="removeFilmMaker(i)">{{item.name}}</span>
+                    </h5>
+                    <button type="button" class="button border-blue" data-bs-toggle="modal" data-bs-target="#selectMakerModal" data-bs-whatever="编剧">添加</button>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <!--演员-->
+            <div class="form-group">
+                <div class="label">
+                    <label>选择演员：</label>
+                </div>
+                <div class="field">
+                    <h5>
+                        <span v-for="(item, i) in film.makerList" class="badge bg-success" title="双击移除该项" v-if="item.role=='演员'"
+                              style="margin: 2px 2px; cursor: pointer;" @dblclick="removeFilmMaker(i)">{{item.name}}</span>
+                    </h5>
+                    <button type="button" class="button border-green" data-bs-toggle="modal" data-bs-target="#selectMakerModal" data-bs-whatever="演员">添加</button>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <!--影片类别-->
+            <div class="form-group">
+                <div class="label">
+                    <label>影片类别：</label>
+                </div>
+                <div class="field">
+                    <!-- 有一个用来保存类别-->
+                    <label style="margin-left: 20px;" class="checkbox-inline" v-for="item in categoryList">
+                        <input type="checkbox" v-bind:value="item.id" v-model="film.categoryIds" > {{item.name}}
+                    </label>
+                </div>
+            </div>
+            <!--影片状态-->
+            <div class="form-group">
+                <div class="label">
+                    <label>影片状态：</label>
+                </div>
+                <div class="field">
+                    <label class="checkbox-inline">
+                        <input type="radio" value="0" v-model="film.status"> 制作中
+                    </label>
+                    <label class="checkbox-inline" >
+                        <input type="radio" value="1" v-model="film.status"> 待上映
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="radio" value="2" v-model="film.status"> 正在上映
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="radio" value="3" v-model="film.status"> 已经停播
+                    </label>
+                </div>
+            </div>
+            <!--上映日期-->
+            <div class="form-group">
+                <div class="label">
+                    <label>上映日期：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="date" v-model="film.releaseDate">
+                </div>
+            </div>
+            <!--发行国家-->
+            <div class="form-group">
+                <div class="label">
+                    <label>发行国家：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="text" name="country" v-model="film.country">
+                </div>
+            </div>
+            <!--购票链接-->
+            <div class="form-group">
+                <div class="label">
+                    <label>购票链接：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="text" v-model="film.ticketLink">
+                </div>
+            </div>
+            <!--放映版本-->
+            <div class="form-group">
+                <div class="label">
+                    <label>放映格式/版本：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="text" name="version" v-model="film.version">
+                </div>
+            </div>
+            <!--累计票房-->
+            <div class="form-group">
+                <div class="label">
+                    <label>累计票房：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="text" v-model="film.boxOffice" placeholder="单位：万元">
+                </div>
+            </div>
+            <!--语言-->
+            <div class="form-group">
+                <div class="label">
+                    <label>语言：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="text" name="language" v-model="film.language">
+                </div>
+            </div>
+            <!--时长-->
+            <div class="form-group">
+                <div class="label">
+                    <label>时长：</label>
+                </div>
+                <div class="field">
+                    <input class="input" type="text" v-model="film.length" placeholder="单位：分钟">
+                </div>
+            </div>
+            <!--简介-->
+            <div class="form-group">
+                <div class="label">
+                    <label>简介：</label>
+                </div>
+                <div class="field">
+                    <textarea class="input" type="text" style="height: 200px;" v-model="film.info"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button class="button border-main icon-check-square-o" type="submit"> 提交</button>
+                    <button class="button border-red icon-tags" type="button" onclick="window.history.go(-1);"> 返回
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="/public/js/vue.js"></script>
+    <script type="text/javascript" src="/public/js/axios.js"></script>
+    <script type="text/javascript" src="/public/js/axios-config.js"></script>
+
+    <script>
+        /**
+         * 将信息中的换行符替换成 <br/> 标签
+         * @param text 源数据
+         * @returns {*} 替换之后的数据
+         */
+        function convertTextareaToBR(text) {
+            return text.replace(/\r\n/g,'<br/>').replace(/\n/g,'<br/>').replace(/\s/g,' ');
+        }
+    </script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                keyword: null,
+                categoryList: [], //保存全部的影片分类
+                makerList:[],//保存检索到的影人列表
+                film: {
+                    categoryIds: [], //保存影片映射的类别
+                    makerList: [],//保存选中的影人列表
+                    cover: null,
+                    post: null,
+                    playLink: null
+                },
+                submitUrl: "/api/v1/film/save"
+            },
+            methods: {
+                removeFilmMaker(i){//从影片制作人中移除影人
+                    this.film.makerList.splice(i,1)
+                },
+                selectMaker(item){
+                    this.film.makerList.push({
+                        makerId: item.id,
+                        name: item.name,
+                        role:recipient
+
+                    })
+                },
+                loadCategoryList() {
+                    let url = '/api/v1/category/list'
+                    axios.get(url)
+                        .then(res => {
+                            this.categoryList = res.data
+                        })
+                },
+                searchFilmMaker() {
+                    let url = '/api/v1/maker/page'
+                    let params = {
+                        "pageNum": 1,
+                        "pageSize": 10,
+                        "name": this.keyword
+                    }
+                    axios.post(url,params)
+                        .then(res =>{
+                            this.makerList = res.data.list
+                        })
+                },
+                /**
+                 * 上传影片资源
+                 * @param event
+                 */
+                uploadResource(event) {
+                    const form = new FormData()
+                    // <input type="file" name="file" accept="image/*" @change="uploadAvatar">
+                    form.append('multipartFile', event.target.files[0])
+                    let type = event.target.id
+                    let url = '/api/v1/file/upload'
+                    axios.post(url, form)
+                        .then(res => {
+                            // 根据type判断设置film的相关属性
+                            if (type == 'cover') {
+                                this.film.cover = res.data
+                            }
+                            if (type == 'post') {
+                                this.film.post = res.data
+                            }
+                            if (type == 'playLink') {
+                                this.film.playLink = res.data
+                            }
+                        })
+                },
+                submit() {
+
+                    if (this.film.makerList.length == 0){
+                        alert("你还没有选择影人")
+                        return;
+                    }
+                    if (this.film.categoryIds.length == 0){
+                        alert("你还没有选择影片的类别")
+                        return;
+                    }
+                    axios.post(this.submitUrl,this.film)
+                        .then(res =>{
+                            alert(res.message)
+                        })
+                }
+            },
+            mounted() {
+                // 调用查询影片分类列表的函数
+                this.loadCategoryList()
+                // 去url里取出cid
+                const urlObj = new URL(window.location.href)
+                const params = new URLSearchParams(urlObj.search)
+                const fid = params.get('id')
+                if (fid) {// 如果存在id参数就是修改，否则是添加
+                    let url=`/api/v1/film/detail/${fid}`
+                    axios.get(url)
+                        .then(res => {
+                            this.film = res.data
+                            //[1,2,6]
+                            this.film.categoryIds = this.film.categoryList.map(item => item.id)
+                        })
+                    this.submitUrl = '/api/v1/film/update'
+                }
+
+            }
+
+        })
+    </script>
+
+    <script>
+        const playModal = document.getElementById('playModal')
+        const mediaPlayer = document.getElementById('player')
+
+        // 打开模态框时自动播放
+        playModal.addEventListener('shown.bs.modal', () => {
+            mediaPlayer.play()
+        })
+        // 关闭模态框时自动暂停
+        playModal.addEventListener('hidden.bs.modal', () => {
+            mediaPlayer.pause()
+        })
+        // 声明全局变量用来保存影人身份
+        var recipient = null;
+        const exampleModal = document.getElementById('selectMakerModal')
+        exampleModal.addEventListener('show.bs.modal', event => {
+            // Button that triggered the modal
+            const button = event.relatedTarget
+            // Extract info from data-bs-* attributes
+            recipient = button.getAttribute('data-bs-whatever')
+            // If necessary, you could initiate an AJAX request here
+            // and then do the updating in a callback.
+            //
+            // Update the modal's content.
+            const modalTitle = exampleModal.querySelector('.modal-title')
+            const modalBodyInput = exampleModal.querySelector('.modal-body input')
+
+            modalTitle.textContent = `选择 ${recipient}`
+            // console.log(modalTitle.textContent)
+            // modalBodyInput.value = recipient
+        })
+
+        //如果用户填写了多个国家，语言，放映版本，自动将‘ ’变为/
+        document.querySelector("[name=country]").addEventListener('keyup',function (event) {
+            let val = event.target.value.replaceAll(' ','/')
+            event.target.value = val
+        })
+        document.querySelector("[name=language]").addEventListener('keyup',function (event) {
+            let val = event.target.value.replaceAll(' ','/')
+            event.target.value = val
+        })
+        document.querySelector("[name=version]").addEventListener('keyup',function (event) {
+            let val = event.target.value.replaceAll(' ','/')
+            event.target.value = val
+        })
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.frn.dao.RankingListMapper">
+    <select id="selectList" resultType="com.example.frn.entity.RankingList">
+        select * from ranking_list where is_delete=0
+        <if test="year!=null">
+            and year = #{year}
+        </if>
+        <if test="categoryName!=null and categoryName!=''">
+            and category_name = #{categoryName}
+        </if>
+    </select>
+</mapper>

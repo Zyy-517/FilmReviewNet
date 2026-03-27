@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>后台管理中心</title>
+    <link rel="stylesheet" href="/admin/css/pintuer.css"/>
+    <link rel="stylesheet" href="/admin/css/admin.css"/>
+    <link href="/admin/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all"/>
+    <script src="/admin/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/pintuer.js"></script>
+    <script src="/js/vue.js"></script>
+    <script src="/js/axios.js"></script>
+    <script src="/js/axios-config.js"></script>
+</head>
+<body>
+<div id="app">
+    <!--禁言模态框-->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">禁言用户</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="col-form-label">用户名:</label>
+                            <input type="text" class="form-control" v-model="curUser.username" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="col-form-label">昵称:</label>
+                            <input type="text" class="form-control" v-model="curUser.nickName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="col-form-label">禁言到:</label>
+                            <input type="datetime-local" class="form-control" v-model="curUser.nospeakTime">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="submitJinYan">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel admin-panel">
+        <div class="panel-head"><strong class="icon-reorder"> 会员列表</strong></div>
+        <div class="padding border-bottom">
+            <ul class="search">
+                <li>
+                    <input @keyup.enter="loadData()" v-model="params.username" class="input"
+                           type="text" placeholder="输入用户名快速查找">
+                </li>
+                <li>
+                    <input @keyup.enter="loadData()" v-model="params.nickname" class="input"
+                           type="text" placeholder="输入昵称快速查找">
+                </li>
+                <li>
+                    <button @click="loadData()" class="button border-blue">
+                        <span class="icon-search"></span> 查询
+                    </button>
+                </li>
+<!--                <li>-->
+<!--                    <a class="button border-green" href="/admin/user/updateoradd.html">-->
+<!--                        <span class="icon-edit"></span> 添加</a>-->
+<!--                </li>-->
+            </ul>
+        </div>
+        <table class="table table-hover text-center">
+            <thead>
+            <tr>
+                <th>编号</th>
+                <th>用户名</th>
+                <th>头像</th>
+                <th>昵称</th>
+                <th>手机号</th>
+                <th>邮箱</th>
+                <th>禁言状态</th>
+                <th>禁言日期</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+                <!--在这里遍历列表显示记录-->
+                <tr v-for="item in list">
+                    <td>{{item.id }}</td>
+                    <td>{{ item.username}}</td>
+                    <td>
+                        <img v-bind:src="item.avatar" height="100" alt="">
+                    </td>
+                    <td>{{ item.nickName}}</td>
+                    <td>{{ item.phone}}</td>
+                    <td>{{ item.email}}</td>
+                    <td>
+                        <span v-if="item.nospeakStatus==0" class="text-success">正常</span>
+                        <span v-if="item.nospeakStatus==1" class="text-danger">禁言中</span>
+                    </td>
+                    <td>{{ item.nospeakTime}}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @click="jinYan(item)" data-bs-toggle="modal" data-bs-target="#exampleModal">禁言</button>
+                        <button class="btn btn-sm btn-danger" @click="del(item.id)">封号</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="9" align="center">
+                        <nav aria-label="Page navigation ">
+                            <ul class="pagination">
+                                <li class="page-item" v-if="page.hasPreviousPage">
+                                    <a class="page-link" href="#" @click="goto(page.prePage)">上一页</a>
+                                </li>
+                                <li :class="'page-item ' + (page.pageNum===item?'active':'')"
+                                    v-for="item in page.navigatepageNums">
+                                    <a class="page-link"  href="#" @click="goto(item)">{{ item }}</a>
+                                </li>
+                                <li class="page-item" v-if="page.hasNextPage">
+                                    <a class="page-link" href="#" @click="goto(page.nextPage)">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+    new Vue({
+        'el': '#app',
+        'data': {
+            list: [],
+            page: {},
+            curUser:{},
+            params: {
+                pageNum: 1,
+                pageSize: 5,
+                username:null,
+                nickname:null
+            }
+        },
+        'methods': {
+            jinYan(item){
+                //执行对象拷贝
+              this.curUser = {...item}
+            },
+            submitJinYan(){
+                let url = '/api/v1/user/modifyNospeakStatus'
+                let params = {
+                    "id" : this.curUser.id,
+                    "nospeakStatus":1,
+                    "nospeakTime":this.curUser.nospeakTime + ":00"
+                }
+                axios.post(url,params)
+                    .then(res =>{
+                        alert(res.message)
+                        this.loadData()
+                    })
+            },
+            del(item){
+                if (confirm("确认封禁该账号[account]吗？".replace("account",item.nickName)))
+                let url = '/api/v1/user/remove/'+item.id
+                axios.post(url)
+                    .then(res =>{
+                        alert(res.message)
+                        this.loadData()
+                    })
+            },
+            goto(pn) {
+                this.params.pageNum = pn
+                this.loadData()
+            },
+            loadData() {
+                let url = '/api/v1/user/page'
+                axios.post(url,this.params)
+                    .then(res => {
+                        this.page = res.data
+                        this.list = res.data.list
+                    })
+            }
+        },
+        mounted() {
+            // 手动调用分页查询的函数
+            this.loadData()
+        }
+    })
+
+
+</script>
+</body>
+</html>

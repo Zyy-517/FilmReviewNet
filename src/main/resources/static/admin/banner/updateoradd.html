@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>后台管理中心</title>
+    <link rel="stylesheet" href="/admin/css/pintuer.css"/>
+    <link rel="stylesheet" href="/admin/css/admin.css"/>
+    <link href="/admin/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all"/>
+    <script src="/admin/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/admin/js/pintuer.js"></script>
+    <title>录播图信息</title>
+    <style type="text/css">
+        .occupation-box {
+            border: 1px solid #ddd;
+            width: 300px !important;
+            height: 100px;
+            padding: 20px;
+        }
+
+        .occupation-box > label {
+            margin-right: 22px;
+        }
+        .body-content label {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="panel admin-panel">
+    <div class="panel-head"><strong><span class="icon-pencil-square-o"></span> 首页轮播信息</strong></div>
+    <div id="app" class="body-content">
+        <form method="post" class="form-x" id="form" @submit.prevent="submit">
+            <div class="form-group">
+                <div class="label">
+                    <label>标题：</label>
+                </div>
+                <div class="field">
+                    <input type="hidden" name="id" v-model="banner.id"/>
+                    <input type="text" class="input" name="name" v-model="banner.title" style="width: 600px" />
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <!--海报-->
+            <div class="form-group">
+                <div class="label">
+                    <label>海报：</label>
+                </div>
+                <div class="field" >
+                    <input type="text" name="avatar" class="input"
+                           data-bs-toggle="hover" data-bs-place="right"
+                           style="width: 600px;" readonly>
+                    <img class="img-upload" v-show="banner.post != null" v-bind:src="banner.post" width="100" alt="">
+                    <input type="file" name="file" accept="image/*" @change="uploadPost">
+                </div>
+            </div>
+            <!--内容-->
+            <div class="form-group">
+                <div class="label">
+                    <label>内容：</label>
+                </div>
+                <div class="field">
+                    <textarea v-model="banner.content" class="input" type="text" style="height: 200px; width: 600px;" ></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>序号：</label>
+                </div>
+                <div class="field">
+                    <input type="text" class="input" v-model="banner.sort" style="width: 600px" />
+                    <div class="tips"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button class="button border-main icon-check-square-o" type="submit"> 提交</button>
+                    <button class="button border-red icon-tags" type="button" onclick="window.history.go(-1);"> 返回
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="/public/js/vue.js"></script>
+    <script type="text/javascript" src="/public/js/axios.js"></script>
+    <script type="text/javascript" src="/public/js/axios-config.js"></script>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                banner: {},
+                submitUrl: "/api/v1/banner/save"
+            },
+            methods: {
+                submit() {
+                    axios.post(this.submitUrl,this.banner)
+                        .then(res =>{
+                            alert(res.message)
+                        })
+                },
+                uploadPost(event) {
+                    const form = new FormData()
+                    form.append('multipartFile',event.target.files[0])
+                    let url = '/api/v1/file/upload'
+                    axios.post(url,form)
+                        .then(res =>{
+                            this.banner.post = res.data
+                        })
+                }
+            },
+            mounted() {
+                // 去url里取出cid
+                const urlObj = new URL(window.location.href)
+                const params = new URLSearchParams(urlObj.search)
+                const cid = params.get('id')
+                if (cid) {// 如果存在id参数就是修改，否则是添加
+                    let url='/api/v1/banner/detail/{id}'.replace('{id}',cid)
+                    axios.get(url)
+                        .then(res=>{
+                            this.banner = res.data
+                        })
+                    this.submitUrl = '/api/v1/banner/update'
+                }
+
+            }
+
+        })
+    </script>
+</div>
+</body>
+</html>
